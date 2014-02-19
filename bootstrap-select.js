@@ -84,12 +84,13 @@
             //If we are multiple, then add the show-tick class by default
             var multiple = this.multiple ? ' show-tick' : '';
             var autofocus = this.autofocus ? ' autofocus' : '';
+            var labels = this.options.labels ? ' labels' : '';
             var header = this.options.header ? '<div class="popover-title"><button type="button" class="close" aria-hidden="true">&times;</button>' + this.options.header + '</div>' : '';
             var searchbox = this.options.liveSearch ? '<div class="bootstrap-select-searchbox"><input type="text" class="input-block-level form-control" /></div>' : '';
             var drop =
-                '<div class="btn-group bootstrap-select' + multiple + '">' +
+                '<div class="btn-group bootstrap-select' + multiple + labels + '">' +
                     '<button type="button" class="btn dropdown-toggle selectpicker" data-toggle="dropdown"'+ autofocus +'>' +
-                        '<span class="filter-option pull-left"></span>&nbsp;' +
+                        '<div class="filter-option"></div>&nbsp;' +
                         '<span class="caret"></span>' +
                     '</button>' +
                     '<div class="dropdown-menu open">' +
@@ -231,6 +232,21 @@
             //Fixes issue in IE10 occurring when no default option is selected and at least one option is disabled
             //Convert all the values into a comma delimited string
             var title = !this.multiple ? selectedItems[0] : selectedItems.join(this.options.multipleSeparator);
+            var titleHTML = title;
+
+            if (this.multiple && this.options.labels) {
+                titleHTML = '';
+                for (var i in selectedItems) {
+                    var escapedVal = encodeURIComponent(selectedItems[i]);
+                    titleHTML +=
+                        '<span class="label label-default bootstrap-select-label pull-left">' +
+                            '<span>' + selectedItems[i] + '</span>' + 
+                            '<a class="close bootstrap-select-close" ' + 
+                                 'title="Unselect ' + escapedVal + '" ' +
+                                 'data-value="' + escapedVal + '">&times;</a>' +
+                        '</span>';
+                }
+            }
 
             //If this is multi select, and the selectText type is count, the show 1 of 2 selected etc..
             if (this.multiple && this.options.selectedTextFormat.indexOf('count') > -1) {
@@ -247,7 +263,28 @@
             }
 
             this.$button.attr('title', $.trim(title));
-            this.$newElement.find('.filter-option').html(title);
+            var $filterOption = this.$newElement.find('.filter-option');
+            $filterOption.html(titleHTML || '<div class="nothing-selected">' + title + '</div>');
+
+            if (this.options.labels) {
+                // Detect clicks on the 'remove' button for each label.
+                $('.bootstrap-select-close', $filterOption).click(function(e) {
+                    var $closeBtn = $(this);
+                    e.stopPropagation();
+                    // Find the option with the value below.
+                    // De-select and call render.
+                    var val = $closeBtn.data('value');
+                    $('option', that.$element).each(function() {
+                        var $option = $(this);
+                        if ($option.attr('value') !== val && $option.text() !== decodeURIComponent(val)) return;
+                        $option.removeAttr('selected');
+                    });
+                    // Calling change() calls render but does not updateLIs.
+                    that.$element.change();
+                    // The LIs need to be updated.
+                    that.render();
+                });
+            }
         },
 
         setStyle: function(style, status) {
@@ -860,7 +897,8 @@
         liveSearch: false,
         multipleSeparator: ', ',
         iconBase: 'glyphicon',
-        tickIcon: 'glyphicon-ok'
+        tickIcon: 'glyphicon-ok',
+        labels: false // If true, will show chosen style labels. This only works with multi-selects.
     };
 
     $(document)
