@@ -364,7 +364,8 @@
     mobile: false,
     selectOnTab: false,
     dropdownAlignRight: false,
-    windowPadding: 0
+    windowPadding: 0,
+    language: navigator.languages ? navigator.languages[0] : (navigator.language || navigator.userLanguage || 'en-US')
   };
 
   Selectpicker.prototype = {
@@ -1840,7 +1841,9 @@
             options = typeof _option == 'object' && _option;
 
         if (!data) {
-          var config = $.extend({}, Selectpicker.DEFAULTS, $.fn.selectpicker.defaults || {}, $this.data(), options);
+            var language = options.language || Selectpicker.DEFAULTS.language;
+
+            var config = $.extend({}, Selectpicker.DEFAULTS, $.fn.selectpicker.defaults[language] || $.fn.selectpicker.defaults || {}, $this.data(), options);
           config.template = $.extend({}, Selectpicker.DEFAULTS.template, ($.fn.selectpicker.defaults ? $.fn.selectpicker.defaults.template : {}), $this.data().template, options.template);
           $this.data('selectpicker', (data = new Selectpicker(this, config)));
         } else if (options) {
@@ -1872,6 +1875,14 @@
   var old = $.fn.selectpicker;
   $.fn.selectpicker = Plugin;
   $.fn.selectpicker.Constructor = Selectpicker;
+
+  $.fn.selectpicker.LoadLanguage = function (languageCode, messages) {
+      if (!$.fn.selectpicker.defaults) {
+          $.fn.selectpicker.defaults = {};
+      }
+
+      $.fn.selectpicker.defaults[languageCode] = messages;
+  }
 
   // SELECTPICKER NO CONFLICT
   // ========================
